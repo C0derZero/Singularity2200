@@ -35,7 +35,8 @@ class Jogador(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
     
         #posicao do sprite
-        self.rect.topleft = (posicaoX,posicaoY)    
+        self.rect.topleft = (posicaoX,posicaoY)
+
         #Propiedades do Jogador
         self.vida = vida
         self.oxigenio = oxigenio
@@ -110,68 +111,75 @@ class Jogador(pygame.sprite.Sprite):
         janela.blit(self.image,self.rect)
         self.sprites.draw(self.janela)  # Desenha todos os sprites (incluindo o jogador)
         pygame.display.flip()  # Atualiza a tela         
-     
-def tocar_musica_menu(caminho_musica):
-    pygame.mixer.music.load(caminho_musica)  # Carrega a música
-    pygame.mixer.music.set_volume(0.5)  # Define o volume (0.0 a 1.0)
-    pygame.mixer.music.play(-1)  # Reproduz a música em loop
+class Menu:    
+    def __init__(self, janela):
+            self.janela = janela
+            self.imagem_de_menu = pygame.image.load('ConfigMenusEtc/MenuSingularity.jpeg')
+            self.imagem_menu_transformada = pygame.transform.scale(self.imagem_de_menu, (largura, altura))
+            self.musica_menu = 'MusicSingularity/Singularity2200MenuSoundtrack.wav'
 
-def parar_musica_menu():
-    pygame.mixer.music.stop()  # Para a música    
-#configurações de Menu
-def exibirMenu():
-    imagemDeMenu = pygame.image.load('ConfigMenusEtc/MenuSingularity.jpeg') 
-    imagemMenuTransformada = pygame.transform.scale(imagemDeMenu,(largura,altura))
+    def tocar_musica_menu(self):
+            pygame.mixer.music.load(self.musica_menu)
+            pygame.mixer.music.set_volume(0.5)
+            pygame.mixer.music.play(-1)
 
-    tocar_musica_menu('MusicSingularity/Singularity2200MenuSoundtrack.wav') 
+    def parar_musica_menu(self):
+            pygame.mixer.music.stop()
 
-    jogo_ativo = False
+    def exibir_menu(self):
+            self.tocar_musica_menu()
+            jogo_ativo = False
 
-    while not jogo_ativo:
-        janela.fill((255,255,255))
-        janela.blit(imagemMenuTransformada,(0,0))
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            if event.type == pygame.KEYDOWN:
-                if event.key == K_ESCAPE:
+            while not jogo_ativo:
+                self.janela.fill((255, 255, 255))
+                self.janela.blit(self.imagem_menu_transformada, (0, 0))
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        pygame.quit()
+                        sys.exit()
+                    if event.type == pygame.KEYDOWN:
+                        if event.key == K_ESCAPE:
+                            pygame.quit()
+                            sys.exit()
+                        if event.key == K_p:
+                            self.parar_musica_menu()
+                            jogo_ativo = True
+                pygame.display.flip()            
+
+class Jogo:
+    def __init__(self):
+        pygame.init()
+        pygame.mixer.init()
+        self.info = pygame.display.Info()
+        self.largura = self.info.current_w
+        self.altura = self.info.current_h
+        self.janela = pygame.display.set_mode((self.largura, self.altura), FULLSCREEN)
+        self.fps = pygame.time.Clock()
+        self.FPS = 60
+        self.menu = Menu(self.janela)
+        
+    def iniciar_jogo(self):
+        jogador = Jogador(vida=100, oxigenio=100, velocidadeJogador=5, gravidade=0.8, posicaoX=self.largura//2, posicaoY=self.altura//2)
+        todos_sprites = pygame.sprite.Group()
+        todos_sprites.add(jogador)
+
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
-                if event.key == K_p:
-                    parar_musica_menu()
-                    jogo_ativo = True   
-                    
-        pygame.display.flip()
-        fps.tick(FPS)
-    iniciarJogo()  
+                if event.type == KEYDOWN:
+                    if event.key == K_ESCAPE:
+                        pygame.quit()
+                        sys.exit()        
 
-def iniciarJogo():
-    jogador = Jogador(vida=100, oxigenio=100, velocidadeJogador=5, gravidade=0.9, posicaoX=largura//2, posicaoY=altura//2)
-    todos_sprites = pygame.sprite.Group()
-    todos_sprites.add(jogador)
+            todos_sprites.update()
+            self.janela.fill((0, 0, 0))
+            todos_sprites.draw(self.janela)
+            pygame.display.flip()
+            self.fps.tick(self.FPS)
 
-    while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            if event.type == KEYDOWN:
-                if event.key == K_ESCAPE:
-                    pygame.quit()
-                    sys.exit()    
-
-        # Atualiza todos os sprites
-        todos_sprites.update()
-
-        # Desenha tudo na tela
-        janela.fill((0, 0, 0))  # Limpa a tela com preto
-        todos_sprites.draw(janela)
-        pygame.display.flip()
-        fps.tick(FPS)      
-
-
-#inicialização de Jogo(falta alguns ajustes)
-exibirMenu()
-
-
+if __name__ == "__main__":
+    jogo = Jogo()
+    jogo.menu.exibir_menu()
+    jogo.iniciar_jogo()
